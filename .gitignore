@@ -1,0 +1,28 @@
+.DS_Store
+
+# Environment and local config
+.env
+.env.*
+!.env.example
+
+# Composer
+/vendor/
+
+# Frontend dependencies
+/node_modules/
+
+# IDE and editor files
+/.idea/
+/.vscode/
+*.swp
+*.swo
+
+# Runtime files
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+
+# PHPUnit / coverage
+/.phpunit.result.cache
+/coverage/
