@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+// Nacita triedy z app/.
 spl_autoload_register(static function (string $class): void {
     $prefix = 'App\\';
 
@@ -61,6 +62,7 @@ function config(string $key, mixed $default = null): mixed
 
 function app_url(string $path = ''): string
 {
+    // Vrati URL aplikacie.
     $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
     $base = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
     $base = $base === '/' ? '' : $base;
@@ -75,6 +77,7 @@ function asset(string $path): string
 
 function redirect(string $path): never
 {
+    // Presmeruje na inu stranku.
     header('Location: ' . app_url($path));
     exit;
 }

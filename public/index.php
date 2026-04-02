@@ -9,5 +9,11 @@ session_start();
 
 require_once dirname(__DIR__) . '/app/functions.php';
 
+// Nacita routy a spracuje poziadavku.
 $router = require base_path('routes.php');
 $router->dispatch($_SERVER['REQUEST_URI'] ?? '/', $_SERVER['REQUEST_METHOD'] ?? 'GET');
+
+use App\Core\Database;
+
+// Overi pripojenie k databaze.
+Database::connection();
