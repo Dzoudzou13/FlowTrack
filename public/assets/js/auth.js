@@ -155,18 +155,12 @@ function attachFormHandlers() {
   const registerForm = document.getElementById("register-form");
 
   loginForm?.addEventListener("submit", (event) => {
+  hideAlert();
+
+  if (!validateLogin(loginForm)) {
     event.preventDefault();
-    hideAlert();
-
-    if (!validateLogin(loginForm)) {
-      showAlert("Skontroluj prihlasovacie údaje.", "error");
-      return;
-    }
-
-    showAlert(
-      "Údaje vyzerajú v poriadku. Po napojení backendu sa tu spustí reálne prihlásenie.",
-      "success"
-    );
+    showAlert("Skontroluj prihlasovacie údaje.", "error");
+  }
   });
 
   registerForm?.addEventListener("submit", (event) => {
