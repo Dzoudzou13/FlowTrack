@@ -60,9 +60,21 @@ $introText = $isLogin
 
       <div class="alert" id="form-alert" role="status" aria-live="polite" hidden></div>
 
+      <?php if (! empty($authError ?? null)): ?>
+      <div class="alert is-error" role="alert">
+        <?= htmlspecialchars($authError, ENT_QUOTES, 'UTF-8') ?>
+      </div>
+    <?php endif; ?>
+
       <section class="auth-form-panel is-active">
         <?php if ($isLogin): ?>
-          <form class="auth-form" id="login-form" novalidate>
+          <form
+            class="auth-form"
+            id="login-form"
+            method="POST"
+            action="<?= htmlspecialchars(app_url('/login'), ENT_QUOTES, 'UTF-8') ?>"
+            novalidate
+          >
             <label class="field">
               <span>Email</span>
               <input

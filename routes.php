@@ -14,7 +14,9 @@ $dashboardController = new DashboardController();
 // Definicia rout.
 $router->get('/', static fn () => redirect('/login'));
 $router->get('/login', [$authController, 'showLogin']);
+$router->post('/login', [$authController, 'login']);
 $router->get('/register', [$authController, 'showRegister']);
 $router->get('/dashboard', [$dashboardController, 'index']);
+
 
 return $router;
