@@ -12,6 +12,10 @@ $bodyTheme = $bodyTheme ?? 'dark';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></title>
+    <script>
+      // Nastavi temu pred renderom, aby nebolo blikanie.
+      (function(){var t=localStorage.getItem('ft-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -23,3 +27,4 @@ $bodyTheme = $bodyTheme ?? 'dark';
     <?php endforeach; ?>
   </head>
   <body data-theme="<?= htmlspecialchars($bodyTheme, ENT_QUOTES, 'UTF-8') ?>">
+<?php require template_path('partials/cookie-bar.php'); ?>
