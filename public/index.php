@@ -11,9 +11,14 @@ require_once dirname(__DIR__) . '/app/functions.php';
 
 // Nacita routy a spracuje poziadavku.
 $router = require base_path('routes.php');
-$router->dispatch($_SERVER['REQUEST_URI'] ?? '/', $_SERVER['REQUEST_METHOD'] ?? 'GET');
 
-use App\Core\Database;
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+// Method override pre PUT/DELETE cez skryte pole _method vo formulari.
+if ($method === 'POST' && isset($_POST['_method'])) {
+    $override = strtoupper($_POST['_method']);
+    if (in_array($override, ['PUT', 'PATCH', 'DELETE'], true)) {
+        $method = $override;
+    }
+}
 
-// Overi pripojenie k databaze.
-Database::connection();
+$router->dispatch($_SERVER['REQUEST_URI'] ?? '/', $method);
