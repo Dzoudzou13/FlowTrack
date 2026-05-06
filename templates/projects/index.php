@@ -70,6 +70,11 @@ require template_path('partials/header.php');
                     default     => $p['status'],
                   } ?></span>
                 </div>
+                <a
+                  href="<?= htmlspecialchars(app_url('/projects/' . $p['id']), ENT_QUOTES, 'UTF-8') ?>"
+                  aria-label="Otvoriť projekt <?= htmlspecialchars($p['name'], ENT_QUOTES, 'UTF-8') ?>"
+                  style="position:absolute;inset:0;z-index:1;"
+                ></a>
                 <?php if (!empty($p['description'])): ?>
                   <p class="project-card-desc"><?= htmlspecialchars(mb_substr($p['description'], 0, 80), ENT_QUOTES, 'UTF-8') ?><?= mb_strlen($p['description']) > 80 ? '…' : '' ?></p>
                 <?php endif; ?>
@@ -83,7 +88,14 @@ require template_path('partials/header.php');
               </div>
               <div class="project-card-footer">
                 <span style="font-size:12px; color:var(--text-muted);"><?= number_format((float) $p['hourly_rate'], 0) ?> €/h</span>
-                <a href="<?= htmlspecialchars(app_url('/projects/' . $p['id'] . '/board'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-ghost btn-sm">Board</a>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative;z-index:2;">
+                  <a href="<?= htmlspecialchars(app_url('/projects/' . $p['id']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-ghost btn-sm">Detail</a>
+                  <a href="<?= htmlspecialchars(app_url('/projects/' . $p['id'] . '/board'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-ghost btn-sm">Board</a>
+                  <a href="<?= htmlspecialchars(app_url('/projects/' . $p['id'] . '/edit'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-ghost btn-sm">Upraviť</a>
+                  <form method="POST" action="<?= htmlspecialchars(app_url('/projects/' . $p['id'] . '/delete'), ENT_QUOTES, 'UTF-8') ?>" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Naozaj chceš zmazať tento projekt? Táto akcia je nenávratná.')">Zmazať</button>
+                  </form>
+                </div>
               </div>
             </div>
           <?php endforeach; ?>
