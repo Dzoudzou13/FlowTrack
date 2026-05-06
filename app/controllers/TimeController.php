@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\ProjectModel;
+use App\Models\TaskModel;
 use App\Models\TimeEntryModel;
 
 final class TimeController extends Controller
@@ -23,6 +24,7 @@ final class TimeController extends Controller
             'month'      => $month,
         ]);
         $projects = ProjectModel::listForSelect($wid);
+        $tasks    = TaskModel::allByWorkspace($wid);
         $totals   = TimeEntryModel::sumByWorkspace($wid, $month);
 
         // Tyzden stats.
@@ -35,13 +37,22 @@ final class TimeController extends Controller
         $weekStmt->execute(['wid' => $wid, 's' => $weekStart, 'e' => $weekEnd]);
         $weekMinutes = (int) $weekStmt->fetchColumn();
 
+        $weekBillableStmt = \App\Core\Database::connection()->prepare(
+            'SELECT COALESCE(SUM(duration_minutes),0) FROM time_entries
+             WHERE workspace_id = :wid AND billable = 1 AND DATE(started_at) BETWEEN :s AND :e'
+        );
+        $weekBillableStmt->execute(['wid' => $wid, 's' => $weekStart, 'e' => $weekEnd]);
+        $weekBillableMinutes = (int) $weekBillableStmt->fetchColumn();
+
         $this->render('time/index', [
-            'pageTitle'   => 'Time Tracking | FlowTrack',
-            'entries'     => $entries,
-            'projects'    => $projects,
-            'totals'      => $totals,
-            'weekMinutes' => $weekMinutes,
-            'month'       => $month,
+            'pageTitle'           => 'Time Tracking | FlowTrack',
+            'entries'             => $entries,
+            'projects'            => $projects,
+            'tasks'               => $tasks,
+            'totals'              => $totals,
+            'weekMinutes'         => $weekMinutes,
+            'weekBillableMinutes' => $weekBillableMinutes,
+            'month'               => $month,
         ]);
     }
 
@@ -57,13 +68,16 @@ final class TimeController extends Controller
             redirect('/time');
         }
 
+        $startedAt = trim($_POST['started_at'] ?? '');
+        $startedAt = $startedAt !== '' ? str_replace('T', ' ', $startedAt) : date('Y-m-d H:i:s');
+
         TimeEntryModel::create([
             'task_id'          => $_POST['task_id'] ?? '',
             'project_id'       => $projectId,
             'user_id'          => $user['id'],
             'workspace_id'     => $user['workspace_id'],
             'description'      => trim($_POST['description'] ?? ''),
-            'started_at'       => $_POST['started_at'] ?? date('Y-m-d H:i:s'),
+            'started_at'       => $startedAt,
             'duration_minutes' => $duration,
             'billable'         => $_POST['billable'] ?? '',
         ]);
