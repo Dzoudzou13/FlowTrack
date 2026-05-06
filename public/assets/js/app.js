@@ -24,6 +24,48 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // Topbar search — live client-side filter across pages.
+  var searchInput = document.querySelector('.topbar-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      var q = this.value.toLowerCase().trim();
+
+      // Board: kanban cards.
+      var cards = document.querySelectorAll('.kanban-card[data-search-text]');
+      if (cards.length) {
+        cards.forEach(function (card) {
+          card.hidden = q !== '' && !card.dataset.searchText.includes(q);
+        });
+        document.querySelectorAll('.kanban-col').forEach(function (col) {
+          var count = col.querySelectorAll('.kanban-card[data-search-text]:not([hidden])').length;
+          var badge = col.querySelector('.kanban-col-count');
+          if (badge) badge.textContent = count;
+        });
+      }
+
+      // Projects: project cards.
+      document.querySelectorAll('.project-card[data-search-text]').forEach(function (card) {
+        card.hidden = q !== '' && !card.dataset.searchText.includes(q);
+      });
+
+      // Time: table rows.
+      document.querySelectorAll('.data-table tbody tr[data-search-text]').forEach(function (row) {
+        row.hidden = q !== '' && !row.dataset.searchText.includes(q);
+      });
+
+      // Activity: timeline items + hide empty day groups.
+      var items = document.querySelectorAll('.timeline-item[data-search-text]');
+      if (items.length) {
+        items.forEach(function (item) {
+          item.hidden = q !== '' && !item.dataset.searchText.includes(q);
+        });
+        document.querySelectorAll('.timeline-date-group').forEach(function (group) {
+          group.hidden = group.querySelector('.timeline-item[data-search-text]:not([hidden])') === null;
+        });
+      }
+    });
+  }
+
   function updateThemeIcon(theme) {
     var iconEl = document.querySelector('[data-theme-icon]');
     if (!iconEl) return;

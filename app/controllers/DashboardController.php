@@ -26,6 +26,15 @@ final class DashboardController extends Controller
 
         $activeProjects = count(array_filter($projects, static fn($p) => $p['status'] === 'active'));
 
+        $weekStart = date('Y-m-d', strtotime('monday this week'));
+        $weekEnd   = date('Y-m-d', strtotime('sunday this week'));
+        $weekStmt  = \App\Core\Database::connection()->prepare(
+            'SELECT COALESCE(SUM(duration_minutes), 0) FROM time_entries
+             WHERE workspace_id = :wid AND DATE(started_at) BETWEEN :s AND :e'
+        );
+        $weekStmt->execute(['wid' => $wid, 's' => $weekStart, 'e' => $weekEnd]);
+        $weekMinutes = (int) $weekStmt->fetchColumn();
+
         $this->render('dashboard/index', [
             'pageTitle'      => 'Dashboard | FlowTrack',
             'taskCounts'     => $taskCounts,
@@ -33,6 +42,7 @@ final class DashboardController extends Controller
             'totalsMonth'    => $totalsMonth,
             'activities'     => $activities,
             'activeProjects' => $activeProjects,
+            'weekMinutes'    => $weekMinutes,
         ]);
     }
 }

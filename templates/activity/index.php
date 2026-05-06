@@ -46,8 +46,9 @@ function dayLabel(string $day): string
     $ts    = strtotime($day);
     $today = date('Y-m-d');
     $yesterday = date('Y-m-d', strtotime('-1 day'));
-    if ($day === $today) return 'Dnes — ' . strftime('%e. %B %Y', $ts);
-    if ($day === $yesterday) return 'Včera — ' . strftime('%e. %B %Y', $ts);
+    $fmt = (new \IntlDateFormatter('sk_SK', \IntlDateFormatter::LONG, \IntlDateFormatter::NONE))->format($ts);
+    if ($day === $today) return 'Dnes — ' . $fmt;
+    if ($day === $yesterday) return 'Včera — ' . $fmt;
     return date('j. n. Y', $ts);
 }
 
@@ -106,7 +107,7 @@ require template_path('partials/header.php');
                 <div class="timeline-date-label"><?= htmlspecialchars(dayLabel($day), ENT_QUOTES, 'UTF-8') ?></div>
 
                 <?php foreach ($acts as $act): ?>
-                  <div class="timeline-item">
+                  <div class="timeline-item" data-search-text="<?= htmlspecialchars(mb_strtolower($act['user_name'] . ' ' . $act['action'] . ' ' . $act['entity_type']), ENT_QUOTES, 'UTF-8') ?>">
                     <div class="timeline-icon <?= activityDotClass($act['action']) ?>">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                         <?php if ($act['action'] === 'created'): ?>
