@@ -971,7 +971,8 @@ select.form-control {
 }
 
 .status-badge.active    { background: rgba(34,197,94,0.12);  color: var(--success); }
-.status-badge.on-hold   { background: rgba(245,158,11,0.12); color: var(--warning); }
+.status-badge.on-hold,
+.status-badge.on_hold   { background: rgba(245,158,11,0.12); color: var(--warning); }
 .status-badge.completed { background: rgba(99,102,241,0.12); color: var(--accent); }
 .status-badge.archived  { background: rgba(139,141,151,0.12); color: var(--text-muted); }
 
