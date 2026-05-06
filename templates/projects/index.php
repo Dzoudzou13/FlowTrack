@@ -55,7 +55,7 @@ require template_path('partials/header.php');
               $totalM  = (int) $p['total_minutes'] % 60;
               $timeStr = $totalH . 'h' . ($totalM > 0 ? ' ' . $totalM . 'm' : '');
             ?>
-            <div class="project-card" data-search-text="<?= htmlspecialchars(mb_strtolower($p['name'] . ' ' . ($p['description'] ?? '')), ENT_QUOTES, 'UTF-8') ?>">
+            <div class="project-card">
               <div class="project-card-stripe" style="background: <?= htmlspecialchars($p['color'], ENT_QUOTES, 'UTF-8') ?>;"></div>
               <div class="project-card-body">
                 <div class="project-card-header">

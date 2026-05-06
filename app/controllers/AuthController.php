@@ -116,10 +116,9 @@ final class AuthController extends Controller
         }
 
         // Vytvor workspace.
-        $workspaceName = trim($_POST['workspace'] ?? '') !== '' ? trim($_POST['workspace']) : ($name . ' Workspace');
-        $slug = $this->generateSlug($workspaceName);
+        $slug = $this->generateSlug($name);
         $wsStmt = $pdo->prepare('INSERT INTO workspaces (name, slug) VALUES (:name, :slug)');
-        $wsStmt->execute(['name' => $workspaceName, 'slug' => $slug]);
+        $wsStmt->execute(['name' => $name . ' Workspace', 'slug' => $slug]);
         $workspaceId = (int) $pdo->lastInsertId();
 
         // Vytvor usera ako admin.

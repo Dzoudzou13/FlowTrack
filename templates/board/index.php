@@ -71,7 +71,7 @@ require template_path('partials/header.php');
                     $initials  = strtoupper(substr($t['assignee_name'] ?? '', 0, 1) . (strstr($t['assignee_name'] ?? '', ' ') ? substr(strstr($t['assignee_name'], ' '), 1, 1) : ''));
                     $isOverdue = !empty($t['deadline']) && $t['status'] !== 'done' && strtotime($t['deadline']) < time();
                   ?>
-                  <a href="<?= htmlspecialchars(app_url('/tasks/' . $t['id']), ENT_QUOTES, 'UTF-8') ?>" class="kanban-card" data-task-id="<?= $t['id'] ?>" data-search-text="<?= htmlspecialchars(mb_strtolower($t['title'] . ' ' . ($t['project_name'] ?? '') . ' ' . ($t['assignee_name'] ?? '')), ENT_QUOTES, 'UTF-8') ?>" style="text-decoration:none;display:block;">
+                  <a href="<?= htmlspecialchars(app_url('/tasks/' . $t['id']), ENT_QUOTES, 'UTF-8') ?>" class="kanban-card" data-task-id="<?= $t['id'] ?>" style="text-decoration:none;display:block;">
                     <div class="kanban-card-priority">
                       <span class="priority-badge <?= $t['priority'] ?>"><?= ucfirst($t['priority']) ?></span>
                     </div>

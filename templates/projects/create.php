@@ -62,7 +62,7 @@ require template_path('partials/header.php');
               <label class="form-label" for="status">Status</label>
               <select id="status" name="status" class="form-control">
                 <option value="active">Active</option>
-                <option value="on_hold">On Hold</option>
+                <option value="on-hold">On Hold</option>
                 <option value="completed">Completed</option>
                 <option value="archived">Archived</option>
               </select>
