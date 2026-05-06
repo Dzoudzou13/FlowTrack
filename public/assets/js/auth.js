@@ -164,20 +164,14 @@ function attachFormHandlers() {
   });
 
   registerForm?.addEventListener("submit", (event) => {
-    event.preventDefault();
     hideAlert();
 
     if (!validateRegister(registerForm)) {
+      event.preventDefault();
       if (registerForm.querySelector(".field.is-invalid")) {
         showAlert("Registrácia potrebuje doplniť chýbajúce alebo nesprávne údaje.", "error");
       }
-      return;
     }
-
-    showAlert(
-      "Formulár je vyplnený správne. Po napojení backendu sa účet uloží do databázy.",
-      "success"
-    );
   });
 }
 
