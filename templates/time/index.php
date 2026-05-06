@@ -6,6 +6,26 @@ $pageTitle = $pageTitle ?? 'Time Tracking | FlowTrack';
 $styles    = ['css/app.css'];
 $scripts   = ['js/app.js'];
 
+$entries             = $entries ?? [];
+$projects            = $projects ?? [];
+$tasks               = $tasks ?? [];
+$totals              = $totals ?? ['total_minutes' => 0, 'billable_minutes' => 0, 'revenue' => 0];
+$weekMinutes         = (int) ($weekMinutes ?? 0);
+$weekBillableMinutes = (int) ($weekBillableMinutes ?? 0);
+$month               = $month ?? date('Y-m');
+
+function minutesLabel(int $minutes): string
+{
+    $hours = intdiv($minutes, 60);
+    $mins  = $minutes % 60;
+
+    return $hours . 'h' . ($mins > 0 ? ' ' . $mins . 'm' : '');
+}
+
+$totalMinutes    = (int) ($totals['total_minutes'] ?? 0);
+$billableMinutes = (int) ($totals['billable_minutes'] ?? 0);
+$revenue         = (float) ($totals['revenue'] ?? 0);
+
 require template_path('partials/header.php');
 
 ?>
@@ -19,14 +39,13 @@ require template_path('partials/header.php');
 
     <div class="app-content">
 
-      <!-- Page header -->
       <div class="page-header">
         <div class="page-header-row">
           <div>
             <h1 class="page-title">Time Tracking</h1>
             <p class="page-subtitle">Prehľad odpracovaného času</p>
           </div>
-          <button class="btn btn-primary" id="logTimeBtn">
+          <button class="btn btn-primary" id="logTimeBtn" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 4.5v15m7.5-7.5h-15"/>
             </svg>
@@ -35,7 +54,6 @@ require template_path('partials/header.php');
         </div>
       </div>
 
-      <!-- Log time form (skrytý) -->
       <div id="logTimeForm" style="display: none; margin-bottom: 20px;">
         <div class="form-card" style="max-width: 100%;">
           <p class="form-section-title">Nový time entry</p>
@@ -43,18 +61,22 @@ require template_path('partials/header.php');
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="project_id">Projekt</label>
-                <select id="project_id" name="project_id" class="form-control">
+                <select id="project_id" name="project_id" class="form-control" required>
                   <option value="">Vyber projekt</option>
-                  <option value="1">FlowTrack MVP</option>
-                  <option value="2">API Integrácia</option>
+                  <?php foreach ($projects as $project): ?>
+                    <option value="<?= (int) $project['id'] ?>"><?= htmlspecialchars($project['name'], ENT_QUOTES, 'UTF-8') ?></option>
+                  <?php endforeach; ?>
                 </select>
               </div>
               <div class="form-group">
                 <label class="form-label" for="task_id">Task</label>
                 <select id="task_id" name="task_id" class="form-control">
-                  <option value="">Vyber task</option>
-                  <option value="1">Navrhnúť databázovú schému</option>
-                  <option value="2">Implementovať auth modul</option>
+                  <option value="">Bez tasku</option>
+                  <?php foreach ($tasks as $task): ?>
+                    <option value="<?= (int) $task['id'] ?>" data-project-id="<?= (int) $task['project_id'] ?>">
+                      <?= htmlspecialchars(($task['project_name'] ?? 'Projekt') . ' / ' . $task['title'], ENT_QUOTES, 'UTF-8') ?>
+                    </option>
+                  <?php endforeach; ?>
                 </select>
               </div>
             </div>
@@ -65,7 +87,7 @@ require template_path('partials/header.php');
               </div>
               <div class="form-group">
                 <label class="form-label" for="duration_minutes">Trvanie (minúty)</label>
-                <input type="number" id="duration_minutes" name="duration_minutes" class="form-control" placeholder="napr. 90" min="1" />
+                <input type="number" id="duration_minutes" name="duration_minutes" class="form-control" placeholder="napr. 90" min="1" required />
               </div>
             </div>
             <div class="form-group">
@@ -84,7 +106,6 @@ require template_path('partials/header.php');
         </div>
       </div>
 
-      <!-- Summary cards -->
       <div class="stat-grid" style="margin-bottom: 24px;">
         <div class="stat-card">
           <div class="stat-card-top">
@@ -95,8 +116,8 @@ require template_path('partials/header.php');
               </svg>
             </div>
           </div>
-          <div class="stat-card-value">7h 45m</div>
-          <div class="stat-card-sub">5h billable</div>
+          <div class="stat-card-value"><?= htmlspecialchars(minutesLabel($weekMinutes), ENT_QUOTES, 'UTF-8') ?></div>
+          <div class="stat-card-sub"><?= htmlspecialchars(minutesLabel($weekBillableMinutes), ENT_QUOTES, 'UTF-8') ?> billable</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-top">
@@ -107,8 +128,8 @@ require template_path('partials/header.php');
               </svg>
             </div>
           </div>
-          <div class="stat-card-value">24h</div>
-          <div class="stat-card-sub">18h billable</div>
+          <div class="stat-card-value"><?= htmlspecialchars(minutesLabel($totalMinutes), ENT_QUOTES, 'UTF-8') ?></div>
+          <div class="stat-card-sub"><?= htmlspecialchars(minutesLabel($billableMinutes), ENT_QUOTES, 'UTF-8') ?> billable</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-top">
@@ -119,8 +140,8 @@ require template_path('partials/header.php');
               </svg>
             </div>
           </div>
-          <div class="stat-card-value">630 €</div>
-          <div class="stat-card-sub">za máj 2026</div>
+          <div class="stat-card-value"><?= number_format($revenue, 0, ',', ' ') ?> €</div>
+          <div class="stat-card-sub">za <?= htmlspecialchars($month, ENT_QUOTES, 'UTF-8') ?></div>
         </div>
         <div class="stat-card">
           <div class="stat-card-top">
@@ -131,28 +152,29 @@ require template_path('partials/header.php');
               </svg>
             </div>
           </div>
-          <div class="stat-card-value">8</div>
-          <div class="stat-card-sub">za máj 2026</div>
+          <div class="stat-card-value"><?= count($entries) ?></div>
+          <div class="stat-card-sub">za <?= htmlspecialchars($month, ENT_QUOTES, 'UTF-8') ?></div>
         </div>
       </div>
 
-      <!-- Filter bar -->
-      <div class="filter-bar">
+      <form method="GET" action="<?= htmlspecialchars(app_url('/time'), ENT_QUOTES, 'UTF-8') ?>" class="filter-bar">
         <span class="filter-bar-label">Filter:</span>
-        <select class="filter-select">
+        <select name="project_id" class="filter-select" onchange="this.form.submit()">
           <option value="">Všetky projekty</option>
-          <option value="1">FlowTrack MVP</option>
-          <option value="2">API Integrácia</option>
+          <?php foreach ($projects as $project): ?>
+            <option value="<?= (int) $project['id'] ?>" <?= ((string) ($_GET['project_id'] ?? '') === (string) $project['id']) ? 'selected' : '' ?>>
+              <?= htmlspecialchars($project['name'], ENT_QUOTES, 'UTF-8') ?>
+            </option>
+          <?php endforeach; ?>
         </select>
-        <select class="filter-select">
+        <select name="billable" class="filter-select" onchange="this.form.submit()">
           <option value="">Billable aj nie</option>
-          <option value="1">Len billable</option>
-          <option value="0">Len non-billable</option>
+          <option value="1" <?= (($_GET['billable'] ?? '') === '1') ? 'selected' : '' ?>>Len billable</option>
+          <option value="0" <?= (($_GET['billable'] ?? '') === '0') ? 'selected' : '' ?>>Len non-billable</option>
         </select>
-        <input type="month" class="filter-select" value="2026-05" />
-      </div>
+        <input type="month" name="month" class="filter-select" value="<?= htmlspecialchars($month, ENT_QUOTES, 'UTF-8') ?>" onchange="this.form.submit()" />
+      </form>
 
-      <!-- Time entries table -->
       <div class="table-wrap">
         <table class="data-table">
           <thead>
@@ -167,54 +189,53 @@ require template_path('partials/header.php');
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td class="muted">dnes, 10:00</td>
-              <td><a href="<?= htmlspecialchars(app_url('/projects/1'), ENT_QUOTES, 'UTF-8') ?>" style="color: var(--accent);">FlowTrack MVP</a></td>
-              <td><a href="<?= htmlspecialchars(app_url('/tasks/2'), ENT_QUOTES, 'UTF-8') ?>" style="color: var(--text-primary);">Auth modul</a></td>
-              <td>Implementácia AuthController a login metódy</td>
-              <td><strong>2h 30m</strong></td>
-              <td><span class="billable-dot yes"></span>Áno</td>
-              <td class="right"><button class="btn btn-ghost btn-sm">Zmazať</button></td>
-            </tr>
-            <tr>
-              <td class="muted">včera, 14:30</td>
-              <td><a href="<?= htmlspecialchars(app_url('/projects/1'), ENT_QUOTES, 'UTF-8') ?>" style="color: var(--accent);">FlowTrack MVP</a></td>
-              <td><a href="<?= htmlspecialchars(app_url('/tasks/2'), ENT_QUOTES, 'UTF-8') ?>" style="color: var(--text-primary);">Auth modul</a></td>
-              <td>Napojenie na databázu a testovanie</td>
-              <td><strong>1h 00m</strong></td>
-              <td><span class="billable-dot yes"></span>Áno</td>
-              <td class="right"><button class="btn btn-ghost btn-sm">Zmazať</button></td>
-            </tr>
-            <tr>
-              <td class="muted">30.4., 09:00</td>
-              <td><a href="<?= htmlspecialchars(app_url('/projects/1'), ENT_QUOTES, 'UTF-8') ?>" style="color: var(--accent);">FlowTrack MVP</a></td>
-              <td><a href="<?= htmlspecialchars(app_url('/tasks/1'), ENT_QUOTES, 'UTF-8') ?>" style="color: var(--text-primary);">DB schéma</a></td>
-              <td>DB schéma a migrácia tabuliek</td>
-              <td><strong>1h 15m</strong></td>
-              <td><span class="billable-dot yes"></span>Áno</td>
-              <td class="right"><button class="btn btn-ghost btn-sm">Zmazať</button></td>
-            </tr>
-            <tr>
-              <td class="muted">29.4., 11:00</td>
-              <td><a href="<?= htmlspecialchars(app_url('/projects/1'), ENT_QUOTES, 'UTF-8') ?>" style="color: var(--accent);">FlowTrack MVP</a></td>
-              <td><a href="<?= htmlspecialchars(app_url('/tasks/8'), ENT_QUOTES, 'UTF-8') ?>" style="color: var(--text-primary);">Routing setup</a></td>
-              <td>Router, front controller, autoload</td>
-              <td><strong>3h 00m</strong></td>
-              <td><span class="billable-dot no"></span>Nie</td>
-              <td class="right"><button class="btn btn-ghost btn-sm">Zmazať</button></td>
-            </tr>
+            <?php if (empty($entries)): ?>
+              <tr>
+                <td colspan="7" class="muted" style="text-align:center;padding:28px;">Žiadne time entries pre zvolený filter.</td>
+              </tr>
+            <?php else: ?>
+              <?php foreach ($entries as $entry): ?>
+                <tr>
+                  <td class="muted"><?= htmlspecialchars(date('d.m.Y H:i', strtotime($entry['started_at'])), ENT_QUOTES, 'UTF-8') ?></td>
+                  <td>
+                    <a href="<?= htmlspecialchars(app_url('/projects/' . $entry['project_id']), ENT_QUOTES, 'UTF-8') ?>" style="color: var(--accent);">
+                      <?= htmlspecialchars($entry['project_name'], ENT_QUOTES, 'UTF-8') ?>
+                    </a>
+                  </td>
+                  <td>
+                    <?php if (!empty($entry['task_id'])): ?>
+                      <a href="<?= htmlspecialchars(app_url('/tasks/' . $entry['task_id']), ENT_QUOTES, 'UTF-8') ?>" style="color: var(--text-primary);">
+                        <?= htmlspecialchars($entry['task_title'] ?? 'Task #' . $entry['task_id'], ENT_QUOTES, 'UTF-8') ?>
+                      </a>
+                    <?php else: ?>
+                      <span class="muted">Bez tasku</span>
+                    <?php endif; ?>
+                  </td>
+                  <td><?= htmlspecialchars($entry['description'] ?: 'Bez popisu', ENT_QUOTES, 'UTF-8') ?></td>
+                  <td><strong><?= htmlspecialchars(minutesLabel((int) $entry['duration_minutes']), ENT_QUOTES, 'UTF-8') ?></strong></td>
+                  <td><span class="billable-dot <?= ((int) $entry['billable'] === 1) ? 'yes' : 'no' ?>"></span><?= ((int) $entry['billable'] === 1) ? 'Áno' : 'Nie' ?></td>
+                  <td class="right">
+                    <form method="POST" action="<?= htmlspecialchars(app_url('/time/' . $entry['id'] . '/delete'), ENT_QUOTES, 'UTF-8') ?>" style="display:inline;">
+                      <button type="submit" class="btn btn-ghost btn-sm" onclick="return confirm('Naozaj chceš zmazať tento záznam?')">Zmazať</button>
+                    </form>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </tbody>
         </table>
       </div>
 
-    </div><!-- /.app-content -->
-  </div><!-- /.app-main -->
-</div><!-- /.app-layout -->
+    </div>
+  </div>
+</div>
 
 <script>
   var logTimeBtn = document.getElementById('logTimeBtn');
   var logTimeForm = document.getElementById('logTimeForm');
   var cancelBtn = document.getElementById('cancelLogTime');
+  var projectSelect = document.getElementById('project_id');
+  var taskSelect = document.getElementById('task_id');
 
   logTimeBtn && logTimeBtn.addEventListener('click', function () {
     logTimeForm.style.display = logTimeForm.style.display === 'none' ? 'block' : 'none';
@@ -223,6 +244,29 @@ require template_path('partials/header.php');
   cancelBtn && cancelBtn.addEventListener('click', function () {
     logTimeForm.style.display = 'none';
   });
+
+  function filterTaskOptions() {
+    if (!projectSelect || !taskSelect) {
+      return;
+    }
+
+    var selectedProject = projectSelect.value;
+    Array.prototype.forEach.call(taskSelect.options, function (option) {
+      if (option.value === '') {
+        option.hidden = false;
+        return;
+      }
+
+      option.hidden = selectedProject !== '' && option.getAttribute('data-project-id') !== selectedProject;
+    });
+
+    if (taskSelect.selectedOptions.length && taskSelect.selectedOptions[0].hidden) {
+      taskSelect.value = '';
+    }
+  }
+
+  projectSelect && projectSelect.addEventListener('change', filterTaskOptions);
+  filterTaskOptions();
 </script>
 
 <?php require template_path('partials/footer.php'); ?>
