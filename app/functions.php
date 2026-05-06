@@ -106,7 +106,11 @@ function app_base_url(): string
 
 function asset(string $path): string
 {
-    return public_url('assets/' . ltrim($path, '/'));
+    $assetPath = ltrim($path, '/');
+    $file = base_path('public/assets/' . $assetPath);
+    $version = is_file($file) ? '?v=' . filemtime($file) : '';
+
+    return public_url('assets/' . $assetPath) . $version;
 }
 
 function redirect(string $path): never

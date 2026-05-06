@@ -36,4 +36,90 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  initTopbarSearch();
+
+  function initTopbarSearch() {
+    var input = document.querySelector('.topbar-search-input');
+    if (!input) return;
+
+    var selectors = [
+      '.stat-card',
+      '.project-card',
+      '.kanban-card',
+      '.task-list-item',
+      '.time-entry-item',
+      '.activity-item',
+      '.timeline-item',
+      '.data-table tbody tr'
+    ];
+    var items = Array.prototype.slice.call(document.querySelectorAll(selectors.join(',')))
+      .filter(function (item) {
+        return !item.closest('.topbar') && !item.querySelector('[colspan]');
+      });
+
+    if (items.length === 0) return;
+
+    var empty = document.createElement('div');
+    empty.className = 'global-search-empty';
+    empty.textContent = 'Nenašli sa žiadne výsledky.';
+    empty.hidden = true;
+    var content = document.querySelector('.app-content');
+    if (content) {
+      content.appendChild(empty);
+    }
+
+    items.forEach(function (item) {
+      item.setAttribute('data-global-search-text', normalizeText(
+        item.getAttribute('data-search-text') || item.textContent || ''
+      ));
+    });
+
+    input.addEventListener('input', function () {
+      var query = normalizeText(input.value);
+      var terms = query.split(' ').filter(Boolean);
+      var visible = 0;
+
+      items.forEach(function (item) {
+        var haystack = item.getAttribute('data-global-search-text') || '';
+        var matched = terms.length === 0 || terms.every(function (term) {
+          return fuzzyIncludes(haystack, term);
+        });
+
+        item.classList.toggle('is-search-hidden', !matched);
+        if (matched) visible++;
+      });
+
+      if (empty) {
+        empty.hidden = terms.length === 0 || visible > 0;
+      }
+    });
+  }
+
+  function normalizeText(value) {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  }
+
+  function fuzzyIncludes(haystack, term) {
+    if (haystack.indexOf(term) !== -1) {
+      return true;
+    }
+
+    var compactHaystack = haystack.replace(/\s+/g, '');
+    var compactTerm = term.replace(/\s+/g, '');
+    var index = 0;
+
+    for (var i = 0; i < compactHaystack.length && index < compactTerm.length; i++) {
+      if (compactHaystack[i] === compactTerm[index]) {
+        index++;
+      }
+    }
+
+    return compactTerm.length > 2 && index === compactTerm.length;
+  }
+
 });
