@@ -106,7 +106,7 @@ $introText = $isLogin
 
             <div class="form-row">
               <label class="checkbox">
-                <input type="checkbox" name="remember" />
+                <input type="checkbox" name="remember_me" />
                 <span>Zapamätať si ma</span>
               </label>
               <a href="#" class="text-link">Zabudnuté heslo?</a>
@@ -115,7 +115,7 @@ $introText = $isLogin
             <button class="primary-button" type="submit">Prihlásiť sa</button>
           </form>
         <?php else: ?>
-          <form class="auth-form" id="register-form" novalidate>
+          <form class="auth-form" id="register-form" method="POST" action="<?= htmlspecialchars(app_url('/register'), ENT_QUOTES, 'UTF-8') ?>" novalidate>
             <label class="field">
               <span>Meno a priezvisko</span>
               <input
