@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Database;
 use App\Models\CommentModel;
 use App\Models\ProjectModel;
 use App\Models\TaskModel;
@@ -26,6 +27,7 @@ final class TaskController extends Controller
         $this->render('tasks/create', [
             'pageTitle' => 'Nový task | FlowTrack',
             'project'   => $project,
+            'members'   => $this->workspaceMembers((int) $user['workspace_id']),
         ]);
     }
 
@@ -45,6 +47,7 @@ final class TaskController extends Controller
             $this->render('tasks/create', [
                 'pageTitle' => 'Nový task | FlowTrack',
                 'project'   => $project,
+                'members'   => $this->workspaceMembers((int) $user['workspace_id']),
                 'formError' => 'Názov tasku je povinný.',
                 'old'       => $_POST,
             ]);
@@ -104,6 +107,7 @@ final class TaskController extends Controller
         $this->render('tasks/edit', [
             'pageTitle' => 'Upraviť task | FlowTrack',
             'task'      => $task,
+            'members'   => $this->workspaceMembers((int) $user['workspace_id']),
         ]);
     }
 
@@ -123,6 +127,7 @@ final class TaskController extends Controller
             $this->render('tasks/edit', [
                 'pageTitle' => 'Upraviť task | FlowTrack',
                 'task'      => array_merge($task, $_POST),
+                'members'   => $this->workspaceMembers((int) $user['workspace_id']),
                 'formError' => 'Názov tasku je povinný.',
             ]);
             return;
@@ -230,5 +235,15 @@ final class TaskController extends Controller
         }
 
         redirect('/tasks/' . $id);
+    }
+
+    private function workspaceMembers(int $workspaceId): array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT id, name FROM users WHERE workspace_id = :wid ORDER BY name'
+        );
+        $stmt->execute(['wid' => $workspaceId]);
+
+        return $stmt->fetchAll();
     }
 }
