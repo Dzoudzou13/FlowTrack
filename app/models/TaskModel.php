@@ -118,8 +118,8 @@ final class TaskModel
 
     public static function updateStatus(int $id, int $workspaceId, string $status): void
     {
-        $allowed = ['backlog', 'in_progress', 'review', 'done'];
-        if (!in_array($status, $allowed, true)) {
+        $status = trim($status);
+        if ($status === '' || strlen($status) > 100) {
             return;
         }
 

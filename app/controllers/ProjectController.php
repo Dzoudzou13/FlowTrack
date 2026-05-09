@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Models\BoardColumnModel;
 use App\Models\ProjectModel;
 use App\Models\TaskModel;
 use App\Models\TimeEntryModel;
@@ -166,17 +167,27 @@ final class ProjectController extends Controller
             return;
         }
 
-        $tasks = TaskModel::allByProject((int) $id);
+        $columns  = BoardColumnModel::getOrCreateDefaults((int) $id, (int) $user['workspace_id']);
+        $projects = ProjectModel::listForSelect((int) $user['workspace_id']);
+        $tasks    = TaskModel::allByProject((int) $id);
 
-        $grouped = ['backlog' => [], 'in_progress' => [], 'review' => [], 'done' => []];
+        $grouped = [];
+        foreach ($columns as $col) {
+            $grouped[$col['slug']] = [];
+        }
         foreach ($tasks as $task) {
+            if (!isset($grouped[$task['status']])) {
+                $grouped[$task['status']] = [];
+            }
             $grouped[$task['status']][] = $task;
         }
 
         $this->render('projects/board', [
             'pageTitle' => 'Board — ' . htmlspecialchars($project['name']) . ' | FlowTrack',
             'project'   => $project,
+            'columns'   => $columns,
             'grouped'   => $grouped,
+            'projects'  => $projects,
         ]);
     }
 }
