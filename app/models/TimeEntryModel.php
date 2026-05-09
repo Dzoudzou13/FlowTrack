@@ -114,15 +114,23 @@ final class TimeEntryModel
         $stmt->execute(['id' => $id, 'wid' => $workspaceId]);
     }
 
-    public static function sumByWorkspace(int $workspaceId, ?string $month = null): array
+    public static function sumByWorkspace(int $workspaceId, ?string $period = null, string $type = 'month'): array
     {
         $pdo    = Database::connection();
         $where  = 'te.workspace_id = :wid';
         $params = ['wid' => $workspaceId];
 
-        if ($month !== null) {
-            $where         .= ' AND DATE_FORMAT(te.started_at, "%Y-%m") = :month';
-            $params['month'] = $month;
+        if ($period !== null) {
+            if ($type === 'week') {
+                $where           .= ' AND YEARWEEK(te.started_at, 1) = YEARWEEK(:period, 1)';
+                $params['period'] = $period;
+            } elseif ($type === 'year') {
+                $where           .= ' AND YEAR(te.started_at) = :period';
+                $params['period'] = $period;
+            } else {
+                $where           .= ' AND DATE_FORMAT(te.started_at, "%Y-%m") = :period';
+                $params['period'] = $period;
+            }
         }
 
         $stmt = $pdo->prepare(
@@ -137,22 +145,30 @@ final class TimeEntryModel
         return $stmt->fetch();
     }
 
-    public static function billingByProject(int $workspaceId, string $month): array
+    public static function billingByProject(int $workspaceId, string $period, string $type = 'month'): array
     {
-        $pdo  = Database::connection();
+        $pdo = Database::connection();
+
+        if ($type === 'week') {
+            $joinCond = 'AND YEARWEEK(te.started_at, 1) = YEARWEEK(:period, 1)';
+        } elseif ($type === 'year') {
+            $joinCond = 'AND YEAR(te.started_at) = :period';
+        } else {
+            $joinCond = 'AND DATE_FORMAT(te.started_at, "%Y-%m") = :period';
+        }
+
         $stmt = $pdo->prepare(
-            'SELECT p.id, p.name, p.color, p.hourly_rate, p.status AS project_status,
+            "SELECT p.id, p.name, p.color, p.hourly_rate, p.status AS project_status,
                     COALESCE(SUM(CASE WHEN te.billable = 1 THEN te.duration_minutes ELSE 0 END), 0) AS billable_minutes,
                     COALESCE(SUM(CASE WHEN te.billable = 0 THEN te.duration_minutes ELSE 0 END), 0) AS non_billable_minutes,
                     COALESCE(SUM(CASE WHEN te.billable = 1 THEN te.duration_minutes / 60 * p.hourly_rate ELSE 0 END), 0) AS revenue
              FROM projects p
-             LEFT JOIN time_entries te ON te.project_id = p.id
-                                      AND DATE_FORMAT(te.started_at, "%Y-%m") = :month
+             LEFT JOIN time_entries te ON te.project_id = p.id $joinCond
              WHERE p.workspace_id = :wid
              GROUP BY p.id
-             ORDER BY revenue DESC'
+             ORDER BY revenue DESC"
         );
-        $stmt->execute(['wid' => $workspaceId, 'month' => $month]);
+        $stmt->execute(['wid' => $workspaceId, 'period' => $period]);
         return $stmt->fetchAll();
     }
 }
