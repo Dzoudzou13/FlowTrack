@@ -2,20 +2,26 @@
 
 declare(strict_types=1);
 
-$pageTitle = $pageTitle ?? 'Billing | FlowTrack';
-$styles    = ['css/app.css'];
-$scripts   = ['js/app.js'];
+$pageTitle   = $pageTitle   ?? 'Billing | FlowTrack';
+$styles      = ['css/app.css'];
+$scripts     = ['js/app.js'];
 
-$projects = $projects ?? [];
-$totals   = $totals   ?? ['total_minutes' => 0, 'billable_minutes' => 0, 'revenue' => 0];
-$month    = $month    ?? date('Y-m');
+$projects    = $projects    ?? [];
+$totals      = $totals      ?? ['total_minutes' => 0, 'billable_minutes' => 0, 'revenue' => 0];
+$type        = $type        ?? 'month';
+$period      = $period      ?? date('Y-m');
+$prevPeriod  = $prevPeriod  ?? date('Y-m', strtotime('-1 month'));
+$nextPeriod  = $nextPeriod  ?? date('Y-m', strtotime('+1 month'));
+$periodLabel = $periodLabel ?? date('F Y', strtotime($period . '-01'));
 
-$totalBillH   = intdiv((int) $totals['billable_minutes'], 60);
-$totalBillM   = (int) $totals['billable_minutes'] % 60;
-$totalNonH    = intdiv(max(0, (int)$totals['total_minutes'] - (int)$totals['billable_minutes']), 60);
-$totalNonM    = max(0, (int)$totals['total_minutes'] - (int)$totals['billable_minutes']) % 60;
-$totalRevenue = (float) $totals['revenue'];
+$totalBillH      = intdiv((int) $totals['billable_minutes'], 60);
+$totalBillM      = (int) $totals['billable_minutes'] % 60;
+$totalNonH       = intdiv(max(0, (int)$totals['total_minutes'] - (int)$totals['billable_minutes']), 60);
+$totalNonM       = max(0, (int)$totals['total_minutes'] - (int)$totals['billable_minutes']) % 60;
+$totalRevenue    = (float) $totals['revenue'];
 $billablePercent = $totals['total_minutes'] > 0 ? round((int)$totals['billable_minutes'] / (int)$totals['total_minutes'] * 100) : 0;
+
+$billingUrl = htmlspecialchars(app_url('/billing'), ENT_QUOTES, 'UTF-8');
 
 require template_path('partials/header.php');
 
@@ -36,8 +42,25 @@ require template_path('partials/header.php');
             <h1 class="page-title">Billing</h1>
             <p class="page-subtitle">Prehľad billable hodín a odhadovaných tržieb</p>
           </div>
-          <input type="month" class="filter-select" value="<?= htmlspecialchars($month, ENT_QUOTES, 'UTF-8') ?>"
-            onchange="window.location='<?= htmlspecialchars(app_url('/billing'), ENT_QUOTES, 'UTF-8') ?>?month='+this.value" />
+          <div class="period-controls">
+            <div class="period-toggle">
+              <a href="<?= $billingUrl ?>?type=week&period=<?= htmlspecialchars(date('Y-m-d', strtotime('monday this week')), ENT_QUOTES, 'UTF-8') ?>"
+                 class="period-toggle-btn <?= $type === 'week'  ? 'active' : '' ?>">Týždeň</a>
+              <a href="<?= $billingUrl ?>?type=month&period=<?= htmlspecialchars(date('Y-m'), ENT_QUOTES, 'UTF-8') ?>"
+                 class="period-toggle-btn <?= $type === 'month' ? 'active' : '' ?>">Mesiac</a>
+              <a href="<?= $billingUrl ?>?type=year&period=<?= htmlspecialchars(date('Y'), ENT_QUOTES, 'UTF-8') ?>"
+                 class="period-toggle-btn <?= $type === 'year'  ? 'active' : '' ?>">Rok</a>
+            </div>
+            <div class="period-nav">
+              <a href="<?= $billingUrl ?>?type=<?= $type ?>&period=<?= htmlspecialchars($prevPeriod, ENT_QUOTES, 'UTF-8') ?>" class="period-nav-arrow" title="Predchádzajúce">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </a>
+              <span class="period-nav-label"><?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?></span>
+              <a href="<?= $billingUrl ?>?type=<?= $type ?>&period=<?= htmlspecialchars($nextPeriod, ENT_QUOTES, 'UTF-8') ?>" class="period-nav-arrow" title="Nasledujúce">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -46,7 +69,7 @@ require template_path('partials/header.php');
         <div class="billing-card">
           <div class="billing-card-label">Celkové tržby</div>
           <div class="billing-card-value"><?= number_format($totalRevenue, 0, ',', ' ') ?> €</div>
-          <div class="billing-card-sub">za <?= date('F Y', strtotime($month . '-01')) ?></div>
+          <div class="billing-card-sub">za <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?></div>
         </div>
         <div class="billing-card">
           <div class="billing-card-label">Billable hodiny</div>
@@ -116,26 +139,28 @@ require template_path('partials/header.php');
           <div class="section-block-header">
             <span class="section-block-title">Billable vs Non-billable</span>
           </div>
-          <div class="section-block-body">
-            <div style="padding:20px 20px 10px;">
-              <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
-                <div style="flex:1;">
-                  <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                    <span style="font-size:12.5px;color:var(--text-secondary);"><span class="billable-dot yes" style="display:inline-block;"></span> Billable (<?= $totalBillH ?>h)</span>
-                    <span style="font-size:12.5px;font-weight:700;color:var(--text-primary);"><?= $billablePercent ?>%</span>
-                  </div>
-                  <div class="progress-bar-wrap"><div class="progress-bar-fill green" style="width:<?= $billablePercent ?>%;"></div></div>
+          <div class="billable-split-wrap">
+            <div class="billable-split-row">
+              <div class="billable-split-item">
+                <div class="billable-split-dot green"></div>
+                <div class="billable-split-info">
+                  <span class="billable-split-time"><?= $totalBillH ?>h <?= $totalBillM > 0 ? $totalBillM . 'm' : '00m' ?></span>
+                  <span class="billable-split-lbl">Billable</span>
                 </div>
+                <span class="billable-split-pct"><?= $billablePercent ?>%</span>
               </div>
-              <div style="display:flex;align-items:center;gap:14px;">
-                <div style="flex:1;">
-                  <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                    <span style="font-size:12.5px;color:var(--text-secondary);"><span class="billable-dot no" style="display:inline-block;"></span> Non-billable (<?= $totalNonH ?>h)</span>
-                    <span style="font-size:12.5px;font-weight:700;color:var(--text-primary);"><?= 100 - $billablePercent ?>%</span>
-                  </div>
-                  <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:<?= 100 - $billablePercent ?>%;background:var(--border);"></div></div>
+              <div class="billable-split-divider"></div>
+              <div class="billable-split-item">
+                <div class="billable-split-dot gray"></div>
+                <div class="billable-split-info">
+                  <span class="billable-split-time"><?= $totalNonH ?>h <?= $totalNonM > 0 ? $totalNonM . 'm' : '00m' ?></span>
+                  <span class="billable-split-lbl">Non-billable</span>
                 </div>
+                <span class="billable-split-pct"><?= 100 - $billablePercent ?>%</span>
               </div>
+            </div>
+            <div class="billable-combined-bar">
+              <div class="billable-combined-fill" style="width:<?= $billablePercent ?>%;"></div>
             </div>
           </div>
         </div>
