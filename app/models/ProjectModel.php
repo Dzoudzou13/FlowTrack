@@ -14,14 +14,13 @@ final class ProjectModel
         $pdo  = Database::connection();
         $stmt = $pdo->prepare(
             'SELECT p.*,
-                    COUNT(DISTINCT t.id)                                        AS task_count,
-                    COALESCE(SUM(te.duration_minutes), 0)                       AS total_minutes,
-                    COALESCE(SUM(CASE WHEN te.billable = 1 THEN te.duration_minutes ELSE 0 END), 0) AS billable_minutes
+                    (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id)    AS task_count,
+                    (SELECT COALESCE(SUM(te.duration_minutes), 0)
+                     FROM time_entries te WHERE te.project_id = p.id)           AS total_minutes,
+                    (SELECT COALESCE(SUM(CASE WHEN te.billable = 1 THEN te.duration_minutes ELSE 0 END), 0)
+                     FROM time_entries te WHERE te.project_id = p.id)           AS billable_minutes
              FROM projects p
-             LEFT JOIN tasks t       ON t.project_id = p.id
-             LEFT JOIN time_entries te ON te.project_id = p.id
              WHERE p.workspace_id = :wid
-             GROUP BY p.id
              ORDER BY p.created_at DESC'
         );
         $stmt->execute(['wid' => $workspaceId]);
@@ -33,15 +32,14 @@ final class ProjectModel
         $pdo  = Database::connection();
         $stmt = $pdo->prepare(
             'SELECT p.*,
-                    COALESCE(SUM(te.duration_minutes), 0)                       AS total_minutes,
-                    COALESCE(SUM(CASE WHEN te.billable = 1 THEN te.duration_minutes ELSE 0 END), 0) AS billable_minutes,
-                    COUNT(DISTINCT t.id)                                        AS task_count,
-                    COUNT(DISTINCT CASE WHEN t.status = "done" THEN t.id END)   AS done_count
+                    (SELECT COALESCE(SUM(te.duration_minutes), 0)
+                     FROM time_entries te WHERE te.project_id = p.id)           AS total_minutes,
+                    (SELECT COALESCE(SUM(CASE WHEN te.billable = 1 THEN te.duration_minutes ELSE 0 END), 0)
+                     FROM time_entries te WHERE te.project_id = p.id)           AS billable_minutes,
+                    (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id)    AS task_count,
+                    (SELECT COUNT(*) FROM tasks t WHERE t.project_id = p.id AND t.status = "done") AS done_count
              FROM projects p
-             LEFT JOIN tasks t        ON t.project_id = p.id
-             LEFT JOIN time_entries te ON te.project_id = p.id
-             WHERE p.id = :id AND p.workspace_id = :wid
-             GROUP BY p.id'
+             WHERE p.id = :id AND p.workspace_id = :wid'
         );
         $stmt->execute(['id' => $id, 'wid' => $workspaceId]);
         return $stmt->fetch();

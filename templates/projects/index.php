@@ -58,7 +58,7 @@ require template_path('partials/header.php');
             <div class="project-card">
               <div class="project-card-stripe" style="background: <?= htmlspecialchars($p['color'], ENT_QUOTES, 'UTF-8') ?>;"></div>
               <div class="project-card-body">
-                <div class="project-card-header">
+                <div class="project-card-top">
                   <a href="<?= htmlspecialchars(app_url('/projects/' . $p['id']), ENT_QUOTES, 'UTF-8') ?>" class="project-card-name">
                     <?= htmlspecialchars($p['name'], ENT_QUOTES, 'UTF-8') ?>
                   </a>

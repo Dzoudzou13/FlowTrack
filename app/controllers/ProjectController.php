@@ -73,14 +73,23 @@ final class ProjectController extends Controller
             return;
         }
 
-        $tasks   = TaskModel::allByProject((int) $id);
-        $entries = TimeEntryModel::allByProject((int) $id);
+        $tasks        = TaskModel::allByProject((int) $id);
+        $entries      = TimeEntryModel::allByProject((int) $id);
+        $monthlyStats = TimeEntryModel::monthlyByProject((int) $id);
+
+        $entriesByMonth = [];
+        foreach ($entries as $e) {
+            $m = date('Y-m', strtotime($e['started_at']));
+            $entriesByMonth[$m][] = $e;
+        }
 
         $this->render('projects/show', [
-            'pageTitle' => htmlspecialchars($project['name']) . ' | FlowTrack',
-            'project'   => $project,
-            'tasks'     => $tasks,
-            'entries'   => $entries,
+            'pageTitle'      => htmlspecialchars($project['name']) . ' | FlowTrack',
+            'project'        => $project,
+            'tasks'          => $tasks,
+            'entries'        => $entries,
+            'monthlyStats'   => $monthlyStats,
+            'entriesByMonth' => $entriesByMonth,
         ]);
     }
 
