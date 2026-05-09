@@ -56,6 +56,23 @@ final class TimeEntryModel
         return $stmt->fetchAll();
     }
 
+    public static function monthlyByProject(int $projectId): array
+    {
+        $pdo  = Database::connection();
+        $stmt = $pdo->prepare(
+            'SELECT DATE_FORMAT(te.started_at, "%Y-%m") AS month,
+                    COALESCE(SUM(te.duration_minutes), 0) AS total_minutes,
+                    COALESCE(SUM(CASE WHEN te.billable = 1 THEN te.duration_minutes ELSE 0 END), 0) AS billable_minutes,
+                    COUNT(*) AS entry_count
+             FROM time_entries te
+             WHERE te.project_id = :pid
+             GROUP BY DATE_FORMAT(te.started_at, "%Y-%m")
+             ORDER BY month DESC'
+        );
+        $stmt->execute(['pid' => $projectId]);
+        return $stmt->fetchAll();
+    }
+
     public static function allByTask(int $taskId): array
     {
         $pdo  = Database::connection();

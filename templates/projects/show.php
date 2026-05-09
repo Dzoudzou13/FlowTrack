@@ -6,9 +6,11 @@ $pageTitle = $pageTitle ?? 'Projekt | FlowTrack';
 $styles    = ['css/app.css'];
 $scripts   = ['js/app.js'];
 
-$project = $project ?? [];
-$tasks   = $tasks   ?? [];
-$entries = $entries ?? [];
+$project        = $project        ?? [];
+$tasks          = $tasks          ?? [];
+$entries        = $entries        ?? [];
+$monthlyStats   = $monthlyStats   ?? [];
+$entriesByMonth = $entriesByMonth ?? [];
 
 $totalH   = intdiv((int) ($project['total_minutes'] ?? 0), 60);
 $totalM   = (int) ($project['total_minutes'] ?? 0) % 60;
@@ -160,6 +162,92 @@ require template_path('partials/header.php');
         </div>
 
       </div>
+
+      <!-- Monthly history -->
+      <?php if (!empty($monthlyStats)): ?>
+        <div class="section-block" style="margin-top: 24px;">
+          <div class="section-block-header">
+            <span class="section-block-title">História po mesiacoch</span>
+          </div>
+          <div class="section-block-body" style="padding: 0;">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th style="width:36px;"></th>
+                  <th>Mesiac</th>
+                  <th style="text-align:right;">Celkom</th>
+                  <th style="text-align:right;">Billable</th>
+                  <th style="text-align:right;">Revenue</th>
+                  <th style="text-align:right;">Záznamy</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($monthlyStats as $i => $row):
+                  $mH       = intdiv((int)$row['total_minutes'], 60);
+                  $mM       = (int)$row['total_minutes'] % 60;
+                  $bH       = intdiv((int)$row['billable_minutes'], 60);
+                  $bM       = (int)$row['billable_minutes'] % 60;
+                  $mRevenue = $row['billable_minutes'] / 60 * ($project['hourly_rate'] ?? 0);
+                  $label    = date('F Y', strtotime($row['month'] . '-01'));
+                  $monthEntries = $entriesByMonth[$row['month']] ?? [];
+                  $groupId  = 'month-' . $i;
+                ?>
+                  <tr class="history-month-row" data-target="<?= $groupId ?>" style="cursor:pointer;">
+                    <td style="padding:12px 6px 12px 18px;">
+                      <svg class="history-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;transition:transform .2s;color:var(--text-muted);">
+                        <path d="M9 18l6-6-6-6"/>
+                      </svg>
+                    </td>
+                    <td style="padding:12px 0; font-weight:600; color:var(--text-primary);"><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></td>
+                    <td style="padding:12px 18px; text-align:right; color:var(--text-primary); font-weight:500;"><?= $mH ?>h<?= $mM > 0 ? ' ' . $mM . 'm' : '' ?></td>
+                    <td style="padding:12px 18px; text-align:right; color:var(--text-secondary);"><?= $bH ?>h<?= $bM > 0 ? ' ' . $bM . 'm' : '' ?></td>
+                    <td style="padding:12px 18px; text-align:right; color:var(--text-secondary);"><?= number_format($mRevenue, 0, ',', ' ') ?> €</td>
+                    <td style="padding:12px 18px; text-align:right; color:var(--text-muted);"><?= (int)$row['entry_count'] ?></td>
+                  </tr>
+                  <tr class="history-entries-row" id="<?= $groupId ?>" style="display:none;">
+                    <td colspan="6" style="padding:0;">
+                      <?php if (!empty($monthEntries)): ?>
+                        <table style="width:100%; border-collapse:collapse;">
+                          <?php foreach ($monthEntries as $e):
+                            $eH = intdiv((int)$e['duration_minutes'], 60);
+                            $eM = (int)$e['duration_minutes'] % 60;
+                          ?>
+                            <tr style="border-bottom:1px solid var(--border-subtle, rgba(255,255,255,.05));">
+                              <td style="width:36px;"></td>
+                              <td style="padding:9px 0; color:var(--text-muted); font-size:12px; width:120px;"><?= date('j.n.Y', strtotime($e['started_at'])) ?></td>
+                              <td style="padding:9px 0; color:var(--text-secondary); font-size:13px; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                <?= htmlspecialchars($e['description'] ?? $e['task_title'] ?? '—', ENT_QUOTES, 'UTF-8') ?>
+                              </td>
+                              <td style="padding:9px 18px; text-align:right; color:var(--text-primary); font-size:13px; font-weight:500;"><?= $eH ?>h<?= $eM > 0 ? ' ' . $eM . 'm' : '' ?></td>
+                              <td style="padding:9px 18px; text-align:right; font-size:12px; color:var(--text-muted);">
+                                <?php if ($e['billable']): ?>
+                                  <span style="color:var(--success); font-size:11px; font-weight:600;">BILL</span>
+                                <?php endif; ?>
+                              </td>
+                              <td style="width:60px;"></td>
+                            </tr>
+                          <?php endforeach; ?>
+                        </table>
+                      <?php endif; ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <script>
+          document.querySelectorAll('.history-month-row').forEach(function(row) {
+            row.addEventListener('click', function() {
+              var target   = document.getElementById(this.dataset.target);
+              var chevron  = this.querySelector('.history-chevron');
+              var open     = target.style.display !== 'none';
+              target.style.display  = open ? 'none' : 'table-row';
+              chevron.style.transform = open ? '' : 'rotate(90deg)';
+            });
+          });
+        </script>
+      <?php endif; ?>
 
     </div><!-- /.app-content -->
   </div><!-- /.app-main -->
