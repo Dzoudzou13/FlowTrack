@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Controllers\ActivityController;
 use App\Controllers\AuthController;
 use App\Controllers\BillingController;
+use App\Controllers\BoardColumnController;
 use App\Controllers\DashboardController;
 use App\Controllers\ProjectController;
 use App\Controllers\SettingsController;
@@ -20,6 +21,7 @@ $auth       = new AuthController();
 $dashboard  = new DashboardController();
 $project    = new ProjectController();
 $task       = new TaskController();
+$boardCol   = new BoardColumnController();
 $time       = new TimeController();
 $settings   = new SettingsController();
 $team       = new TeamController();
@@ -48,7 +50,10 @@ $router->get('/projects/{id}',              [$project, 'show']);
 $router->get('/projects/{id}/edit',         [$project, 'edit']);
 $router->post('/projects/{id}/update',      [$project, 'update']);
 $router->post('/projects/{id}/delete',      [$project, 'destroy']);
-$router->get('/projects/{id}/board',        [$project, 'board']);
+$router->get('/projects/{id}/board',                       [$project, 'board']);
+$router->post('/projects/{id}/columns',                    [$boardCol, 'store']);
+$router->post('/projects/{id}/columns/{colId}/delete',     [$boardCol, 'destroy']);
+$router->post('/columns/reorder',                          [$boardCol, 'reorder']);
 
 // Tasks.
 $router->get('/projects/{projectId}/tasks/create',  [$task, 'create']);
@@ -58,6 +63,7 @@ $router->get('/tasks/{id}/edit',                    [$task, 'edit']);
 $router->post('/tasks/{id}/update',                 [$task, 'update']);
 $router->post('/tasks/{id}/delete',                 [$task, 'destroy']);
 $router->post('/tasks/{id}/status',                 [$task, 'updateStatus']);
+$router->post('/tasks/quick',                       [$task, 'storeQuick']);
 $router->post('/tasks/{id}/comments',               [$task, 'storeComment']);
 $router->post('/tasks/{id}/time',                   [$task, 'storeTimeEntry']);
 
@@ -73,18 +79,28 @@ $router->get('/board', static function () {
     ];
     $tasks    = \App\Models\TaskModel::allByWorkspace($wid, $filters);
     $projects = \App\Models\ProjectModel::listForSelect($wid);
+    $columns  = \App\Models\BoardColumnModel::getOrCreateWorkspaceDefaults($wid);
 
-    $grouped = ['backlog' => [], 'in_progress' => [], 'review' => [], 'done' => []];
+    $grouped = [];
+    foreach ($columns as $col) {
+        $grouped[$col['slug']] = [];
+    }
     foreach ($tasks as $t) {
+        if (!isset($grouped[$t['status']])) {
+            $grouped[$t['status']] = [];
+        }
         $grouped[$t['status']][] = $t;
     }
 
     \App\Core\View::render('board/index', [
         'pageTitle' => 'Board | FlowTrack',
         'grouped'   => $grouped,
+        'columns'   => $columns,
         'projects'  => $projects,
     ]);
 });
+$router->post('/board/columns',                [$boardCol, 'storeWorkspace']);
+$router->post('/board/columns/{colId}/delete', [$boardCol, 'destroyWorkspace']);
 
 // Time tracking.
 $router->get('/time',              [$time, 'index']);

@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-  var dragged = null;
+  var dragged    = null;
+  var draggedCol = null;
 
   // Nastavi drag-and-drop na vsetkych kartach.
   function initDragAndDrop() {
@@ -92,4 +93,83 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   initDragAndDrop();
+  initColumnDragAndDrop();
+
+  // Drag-and-drop pre presúvanie stĺpcov.
+  function initColumnDragAndDrop() {
+    var layout = document.querySelector('.board-layout');
+    if (!layout) return;
+
+    document.querySelectorAll('.kanban-col:not(.kanban-col-add)').forEach(function (col) {
+      var header = col.querySelector('.kanban-col-header');
+      if (!header) return;
+
+      header.style.cursor = 'grab';
+
+      header.addEventListener('mousedown', function () {
+        col.setAttribute('draggable', 'true');
+      });
+      col.addEventListener('dragend', function () {
+        col.setAttribute('draggable', 'false');
+      });
+
+      col.addEventListener('dragstart', function (e) {
+        if (dragged) return; // karty majú prioritu
+        draggedCol = col;
+        col.classList.add('col-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.stopPropagation();
+      });
+
+      col.addEventListener('dragend', function () {
+        col.classList.remove('col-dragging');
+        document.querySelectorAll('.kanban-col').forEach(function (c) {
+          c.classList.remove('col-drag-over');
+        });
+        draggedCol = null;
+        col.setAttribute('draggable', 'false');
+        sendColumnOrder();
+      });
+
+      col.addEventListener('dragover', function (e) {
+        if (!draggedCol || draggedCol === col || col.classList.contains('kanban-col-add')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        col.classList.add('col-drag-over');
+
+        var rect      = col.getBoundingClientRect();
+        var midX      = rect.left + rect.width / 2;
+        var insertAfter = e.clientX > midX;
+        var sibling   = insertAfter ? col.nextSibling : col;
+        if (sibling !== draggedCol && sibling !== draggedCol.nextSibling) {
+          layout.insertBefore(draggedCol, sibling);
+        }
+      });
+
+      col.addEventListener('dragleave', function () {
+        col.classList.remove('col-drag-over');
+      });
+
+      col.addEventListener('drop', function (e) {
+        if (!draggedCol) return;
+        e.preventDefault();
+        e.stopPropagation();
+        col.classList.remove('col-drag-over');
+      });
+    });
+  }
+
+  function sendColumnOrder() {
+    var ids = [];
+    document.querySelectorAll('.kanban-col:not(.kanban-col-add)').forEach(function (col) {
+      var colId = col.getAttribute('data-col-id');
+      if (colId) ids.push(colId);
+    });
+    if (!ids.length) return;
+    fetch('/columns/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'ids=' + encodeURIComponent(JSON.stringify(ids)),
+    }).catch(function (err) { console.error('Column reorder error:', err); });
+  }
 });

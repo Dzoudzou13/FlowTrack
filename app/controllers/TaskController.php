@@ -179,6 +179,32 @@ final class TaskController extends Controller
         echo json_encode(['ok' => true]);
     }
 
+    public function storeQuick(): void
+    {
+        auth_guard();
+        $user      = auth_user();
+        $projectId = (int) ($_POST['project_id'] ?? 0);
+        $title     = trim($_POST['title'] ?? '');
+        $back      = $_POST['_back'] ?? '/board';
+
+        if ($title !== '' && $projectId > 0) {
+            $id = TaskModel::create([
+                'project_id'   => $projectId,
+                'workspace_id' => $user['workspace_id'],
+                'created_by'   => $user['id'],
+                'assigned_to'  => '',
+                'title'        => $title,
+                'description'  => '',
+                'status'       => trim($_POST['status'] ?? 'backlog'),
+                'priority'     => $_POST['priority'] ?? 'medium',
+                'deadline'     => $_POST['deadline'] ?? '',
+            ]);
+            log_activity('task', $id, 'created', ['title' => $title, 'project_id' => $projectId]);
+        }
+
+        redirect($back);
+    }
+
     public function storeComment(string $id): void
     {
         auth_guard();
