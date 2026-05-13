@@ -185,9 +185,12 @@ final class AuthController extends Controller
         $pdo  = Database::connection();
         $base = $slug;
         $i    = 1;
-        while ($pdo->prepare('SELECT id FROM workspaces WHERE slug = :s')->execute(['s' => $slug]) &&
-               $pdo->query("SELECT id FROM workspaces WHERE slug = '$slug'")->fetch()) {
+        $stmt = $pdo->prepare('SELECT id FROM workspaces WHERE slug = :s LIMIT 1');
+
+        $stmt->execute(['s' => $slug]);
+        while ($stmt->fetch()) {
             $slug = $base . '-' . $i++;
+            $stmt->execute(['s' => $slug]);
         }
 
         return $slug;
