@@ -134,13 +134,21 @@ require template_path('partials/header.php');
             </div>
             <div class="section-block-body" style="padding:16px 20px 8px;">
               <div class="comment-list">
-                <?php foreach ($comments as $comment): ?>
+                <?php
+                $currentUser = auth_user();
+                foreach ($comments as $comment):
+                ?>
                   <div class="comment-item">
                     <div class="comment-avatar"><?= htmlspecialchars(mb_strtoupper(mb_substr($comment['user_name'], 0, 1)), ENT_QUOTES, 'UTF-8') ?></div>
                     <div class="comment-body">
                       <div class="comment-header">
                         <span class="comment-author"><?= htmlspecialchars($comment['user_name'], ENT_QUOTES, 'UTF-8') ?></span>
                         <span class="comment-time"><?= htmlspecialchars(date('j.n.Y H:i', strtotime($comment['created_at'])), ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php if ($currentUser && (int) $currentUser['id'] === (int) $comment['user_id']): ?>
+                          <form method="POST" action="<?= htmlspecialchars(app_url('/tasks/' . $task['id'] . '/comments/' . $comment['id'] . '/delete'), ENT_QUOTES, 'UTF-8') ?>" style="display:inline;margin-left:auto;">
+                            <button type="submit" class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px;color:var(--text-muted);" onclick="return confirm('Zmazať komentár?');">Zmazať</button>
+                          </form>
+                        <?php endif; ?>
                       </div>
                       <div class="comment-text"><?= nl2br(htmlspecialchars($comment['body'], ENT_QUOTES, 'UTF-8')) ?></div>
                     </div>

@@ -65,6 +65,7 @@ $router->post('/tasks/{id}/delete',                 [$task, 'destroy']);
 $router->post('/tasks/{id}/status',                 [$task, 'updateStatus']);
 $router->post('/tasks/quick',                       [$task, 'storeQuick']);
 $router->post('/tasks/{id}/comments',               [$task, 'storeComment']);
+$router->post('/tasks/{taskId}/comments/{commentId}/delete', [$task, 'destroyComment']);
 $router->post('/tasks/{id}/time',                   [$task, 'storeTimeEntry']);
 
 // General board (všetky tasky).

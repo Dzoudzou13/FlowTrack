@@ -229,6 +229,21 @@ final class TaskController extends Controller
         redirect('/tasks/' . $id);
     }
 
+    public function destroyComment(string $taskId, string $commentId): void
+    {
+        auth_guard();
+        $user = auth_user();
+        $task = TaskModel::findById((int) $taskId, (int) $user['workspace_id']);
+
+        if ($task === false) {
+            http_response_code(404);
+            return;
+        }
+
+        CommentModel::delete((int) $commentId, (int) $user['id']);
+        redirect('/tasks/' . $taskId);
+    }
+
     public function storeTimeEntry(string $id): void
     {
         auth_guard();
