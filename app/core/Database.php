@@ -13,7 +13,6 @@ final class Database
 
     public static function connection(): PDO
     {
-        // Vrati PDO pripojenie.
         if (self::$connection instanceof PDO) {
             return self::$connection;
         }

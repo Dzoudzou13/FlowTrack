@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-// Nacita triedy z app/.
 spl_autoload_register(static function (string $class): void {
     $prefix = 'App\\';
 
@@ -62,7 +61,6 @@ function config(string $key, mixed $default = null): mixed
 
 function app_url(string $path = ''): string
 {
-    // Vrati URL aplikacie.
     $base = app_base_url();
 
     return $base . ($path === '' ? '' : '/' . ltrim($path, '/'));
@@ -70,7 +68,6 @@ function app_url(string $path = ''): string
 
 function public_url(string $path = ''): string
 {
-    // Vrati URL k public suborom.
     $base = app_base_url();
     $scriptFile = realpath($_SERVER['SCRIPT_FILENAME'] ?? '') ?: '';
     $publicIndex = realpath(base_path('public/index.php')) ?: '';
@@ -82,7 +79,6 @@ function public_url(string $path = ''): string
 
 function current_route_path(): string
 {
-    // Vrati aktualnu routu.
     $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
     $base = app_base_url();
 
@@ -97,7 +93,6 @@ function current_route_path(): string
 
 function app_base_url(): string
 {
-    // Vrati zaklad URL aplikacie.
     $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
     $base = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
 
@@ -115,7 +110,6 @@ function asset(string $path): string
 
 function redirect(string $path): never
 {
-    // Presmeruje na inu stranku.
     header('Location: ' . app_url($path));
     exit;
 }
@@ -131,7 +125,6 @@ function auth_guard(): void
         return;
     }
 
-    // Skus obnovit session z remember-me cookie.
     $token = $_COOKIE['remember_me'] ?? '';
     if ($token !== '') {
         $hash = hash('sha256', $token);
@@ -157,7 +150,6 @@ function auth_guard(): void
             return;
         }
 
-        // Token expiroval alebo neexistuje — vymaž cookie.
         setcookie('remember_me', '', time() - 3600, '/', '', false, true);
     }
 

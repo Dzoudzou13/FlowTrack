@@ -27,7 +27,6 @@ final class TimeController extends Controller
         $tasks    = TaskModel::allByWorkspace($wid);
         $totals   = TimeEntryModel::sumByWorkspace($wid, $month);
 
-        // Tyzden stats.
         $weekStart = date('Y-m-d', strtotime('monday this week'));
         $weekEnd   = date('Y-m-d', strtotime('sunday this week'));
         $weekStmt  = \App\Core\Database::connection()->prepare(

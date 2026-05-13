@@ -174,7 +174,7 @@ final class TaskController extends Controller
         TaskModel::updateStatus((int) $id, (int) $user['workspace_id'], $status);
         log_activity('task', (int) $id, 'status_changed', ['from' => $task['status'], 'to' => $status]);
 
-        // JSON response pre kanban JS fetch().
+        // JSON response.
         header('Content-Type: application/json');
         echo json_encode(['ok' => true]);
     }

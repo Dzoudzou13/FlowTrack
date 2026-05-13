@@ -37,7 +37,6 @@ final class TeamController extends Controller
         auth_guard();
         $user = auth_user();
 
-        // Len admin moze pozivat.
         if ($user['role'] !== 'admin') {
             redirect('/team');
         }
@@ -51,14 +50,12 @@ final class TeamController extends Controller
 
         $pdo = Database::connection();
 
-        // Over ci uz existuje.
         $exists = $pdo->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
         $exists->execute(['email' => $email]);
         if ($exists->fetch()) {
             redirect('/team');
         }
 
-        // Vytvor usera s docasnym heslom.
         $tempPass = bin2hex(random_bytes(8));
         $pdo->prepare(
             'INSERT INTO users (workspace_id, name, email, password_hash, role)

@@ -14,7 +14,6 @@ final class SettingsController extends Controller
         auth_guard();
         $user = auth_user();
 
-        // Nacitaj workspace info.
         $pdo  = Database::connection();
         $ws   = $pdo->prepare('SELECT * FROM workspaces WHERE id = :id');
         $ws->execute(['id' => $user['workspace_id']]);
@@ -48,7 +47,6 @@ final class SettingsController extends Controller
 
         $pdo = Database::connection();
 
-        // Over unikatnost emailu (okrem seba).
         $check = $pdo->prepare('SELECT id FROM users WHERE email = :email AND id != :id LIMIT 1');
         $check->execute(['email' => $email, 'id' => $user['id']]);
         if ($check->fetch()) {
@@ -58,7 +56,6 @@ final class SettingsController extends Controller
         $pdo->prepare('UPDATE users SET name = :name, email = :email WHERE id = :id')
             ->execute(['name' => $name, 'email' => $email, 'id' => $user['id']]);
 
-        // Aktualizuj session.
         $_SESSION['user']['name']  = $name;
         $_SESSION['user']['email'] = $email;
 

@@ -50,7 +50,6 @@ final class Router
 
     private function normalizePath(string $uri): string
     {
-        // Upravi URL na jednotny tvar.
         $path = parse_url($uri, PHP_URL_PATH) ?? '/';
         $base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
 
@@ -68,7 +67,6 @@ final class Router
      */
     private function resolveRoute(string $method, string $path): array
     {
-        // Najde zhodnu routu.
         $routes = $this->routes[$method] ?? [];
 
         if (isset($routes[$path])) {
@@ -98,7 +96,6 @@ final class Router
 
     private function invoke(callable|array $action, array $params = []): void
     {
-        // Spusti controller alebo callback.
         if (is_array($action) && count($action) === 2) {
             [$controller, $method] = $action;
             $controller->{$method}(...$params);
